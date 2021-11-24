@@ -1,5 +1,5 @@
 import mdp.offroad_grid as offroad_grid
-import loader.data_loader as data_loader
+import loader.offroad_loader as offroad_loader
 from torch.utils.data import DataLoader
 import numpy as np
 
@@ -13,10 +13,9 @@ warnings.filterwarnings('ignore')
 from network.hybrid_fcn import HybridFCN
 from network.hybrid_dilated import HybridDilated
 from network.one_stage_dilated import OneStageDilated
-from network.reward_net import RewardNet
 import torch
 import time
-from maxent_nonlinear_offroad_rank import pred, rl, overlay_traj_to_map, visualize
+from maxent_nonlinear_offroad import pred, rl, overlay_traj_to_map, visualize
 
 logging.basicConfig(filename='maxent_nonlinear_offroad.log', format='%(levelname)s. %(asctime)s. %(message)s',
                     level=logging.DEBUG)
@@ -24,11 +23,11 @@ logging.basicConfig(filename='maxent_nonlinear_offroad.log', format='%(levelname
 """ init param """
 #pre_train_weight = 'pre-train-v6-dilated/step1580-loss0.0022763446904718876.pth'
 pre_train_weight = None
-vis_per_steps = 10
+vis_per_steps = 20
 test_per_steps = 20
 # resume = 'step130-loss1.2918855668639102.pth'
 resume = None
-exp_name = '11.23'
+exp_name = '6.34'
 grid_size = 80
 discount = 0.9
 lr = 5e-4
@@ -48,20 +47,20 @@ model = offroad_grid.OffroadGrid(grid_size, discount)
 n_states = model.n_states
 n_actions = model.n_actions
 
-train_loader = data_loader.OffroadLoader(grid_size=grid_size, tangent=False, more_kinematic=None)
+train_loader = offroad_loader.OffroadLoader(grid_size=grid_size, tangent=False, more_kinematic=None)
 train_loader = DataLoader(train_loader, num_workers=n_worker, batch_size=batch_size, shuffle=True)
-test_loader = data_loader.OffroadLoader(grid_size=grid_size, train=False, tangent=False)
+test_loader = offroad_loader.OffroadLoader(grid_size=grid_size, train=False, tangent=False)
 test_loader = DataLoader(test_loader, num_workers=n_worker, batch_size=batch_size, shuffle=True)
 
-net = RewardNet(n_channels=5, n_classes=1)
+net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
+#net = OneStageDilated(feat_out_size=25)
 step = 0
 nll_cma = 0
 nll_test = 0
 
 if resume is None:
     if pre_train_weight is None:
-       #net.init_weights()
-       pass
+        net.init_weights()
     else:
         pre_train_check = torch.load(os.path.join('exp', pre_train_weight))
         net.init_with_pre_train(pre_train_check)
@@ -82,12 +81,11 @@ test_nll_win = vis.line(X=np.array([-1]), Y=np.array([nll_test]),
 """ train """
 best_test_nll = np.inf
 for epoch in range(n_epoch):
-    for _, (feat, past_traj, future_traj, robot_state_feat, ave_energy_cons) in enumerate(train_loader):
+    for _, (feat, past_traj, future_traj) in enumerate(train_loader):
         start = time.time()
         net.train()
         print('main. step {}'.format(step))
-
-        nll_list, r_var, svf_diff_var, values_list = pred(feat, robot_state_feat, future_traj, net, n_states, model, grid_size)
+        nll_list, r_var, svf_diff_var, values_list = pred(feat, future_traj, net, n_states, model, grid_size)
 
         opt.zero_grad()
         # a hack to enable backprop in pytorch with a vector
@@ -111,8 +109,8 @@ for epoch in range(n_epoch):
             # test
             net.eval()
             nll_test_list = []
-            for _, (feat, past_traj, future_traj, robot_state_feat, ave_energy_cons) in enumerate(test_loader):
-                tmp_nll, r_var, svf_diff_var, values_list = pred(feat, robot_state_feat, future_traj, net, n_states, model, grid_size)
+            for _, (feat, past_traj, future_traj) in enumerate(test_loader):
+                tmp_nll, r_var, svf_diff_var, values_list = pred(feat, future_traj, net, n_states, model, grid_size)
                 nll_test_list += tmp_nll
             nll_test = sum(nll_test_list) / len(nll_test_list)
             print('main. test nll {}'.format(nll_test))

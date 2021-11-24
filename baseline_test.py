@@ -1,19 +1,18 @@
 import mdp.offroad_grid as offroad_grid
-import loader.data_loader as data_loader
+import loader.offroad_loader as offroad_loader
 from torch.utils.data import DataLoader
 import numpy as np
 import visdom
 
 from network.hybrid_fcn import HybridFCN
 from network.hybrid_dilated import HybridDilated
-from network.reward_net import RewardNet
 
 from torch.autograd import Variable
 import torch
 import time
 from multiprocessing import Pool
 import os
-from maxent_nonlinear_offroad_rank import visualize_batch
+from maxent_nonlinear_offroad import visualize_batch
 
 # initialize param
 grid_size = 80
@@ -24,9 +23,10 @@ n_worker = 8
 #resume = 'step700-loss0.6980162681374217.pth'
 #net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
 
-exp = '11.23'
-resume = 'step100-loss0.7296417235737547.pth'
-net = RewardNet(n_channels=5, n_classes=1)
+exp = '6.34'
+resume = 'step120-loss0.9028664621154824.pth'
+net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
+
 
 def rl(future_traj_sample, r_sample, model, grid_size):
     svf_demo_sample = model.find_demo_svf(future_traj_sample)
@@ -42,13 +42,11 @@ def rl(future_traj_sample, r_sample, model, grid_size):
     return nll_sample, svf_diff_var_sample, values_sample, dist_sample
 
 
-def pred(feat, robot_state_feat, future_traj, net, n_states, model, grid_size):
+def pred(feat, future_traj, net, n_states, model, grid_size):
     n_sample = feat.shape[0]
     feat = feat.float()
     feat_var = Variable(feat)
-    robot_state_feat = robot_state_feat.float()
-    robot_state_feat_var = Variable(robot_state_feat)
-    r_var = net(feat_var, robot_state_feat_var)
+    r_var = net(feat_var)
 
     result = []
     pool = Pool(processes=n_sample)
@@ -74,19 +72,19 @@ model = offroad_grid.OffroadGrid(grid_size, discount)
 n_states = model.n_states
 n_actions = model.n_actions
 
-loader = data_loader.OffroadLoader(grid_size=grid_size, train=False)
+loader = offroad_loader.OffroadLoader(grid_size=grid_size, train=False)
 loader = DataLoader(loader, num_workers=n_worker, batch_size=batch_size, shuffle=False)
 
-#net.init_weights()
+net.init_weights()
 checkpoint = torch.load(os.path.join('exp', exp, resume))
 net.load_state_dict(checkpoint['net_state'])
 net.eval()
 
 test_nll_list = []
 test_dist_list = []
-for step, (feat, past_traj, future_traj, robot_state_feat, ave_energy_cons) in enumerate(loader):
+for step, (feat, past_traj, future_traj) in enumerate(loader):
     start = time.time()
-    nll_list, r_var, svf_diff_var, values_list, dist_list = pred(feat, robot_state_feat, future_traj, net, n_states, model, grid_size)
+    nll_list, r_var, svf_diff_var, values_list, dist_list = pred(feat, future_traj, net, n_states, model, grid_size)
     test_nll_list += nll_list
     test_dist_list += dist_list
     visualize_batch(past_traj, future_traj, feat, r_var, values_list, svf_diff_var, step, vis, grid_size, train=False)

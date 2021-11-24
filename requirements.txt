@@ -3,7 +3,7 @@
 -- numpy=1.14.0
 -- numba
 -- matplotlib=2.1.2
--- pytorch=0.4.0
+-- pytorch=0.4.1
 -- scipy=1.0.0
 -- seaborn==0.9.0
 -- tqdm=4.19.4
