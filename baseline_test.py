@@ -23,8 +23,8 @@ n_worker = 8
 #resume = 'step700-loss0.6980162681374217.pth'
 #net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
 
-exp = '6.34'
-resume = 'step120-loss0.9028664621154824.pth'
+exp = 'baseline-11.25'
+resume = 'step320-loss1.2045948599018559.pth'
 net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
 
 
@@ -87,7 +87,7 @@ for step, (feat, past_traj, future_traj) in enumerate(loader):
     nll_list, r_var, svf_diff_var, values_list, dist_list = pred(feat, future_traj, net, n_states, model, grid_size)
     test_nll_list += nll_list
     test_dist_list += dist_list
-    visualize_batch(past_traj, future_traj, feat, r_var, values_list, svf_diff_var, step, vis, grid_size, train=False)
+    #visualize_batch(past_traj, future_traj, feat, r_var, values_list, svf_diff_var, step, vis, grid_size, train=False)
     print('{}'.format(sum(test_dist_list) / len(test_dist_list)))
 nll = sum(test_nll_list) / len(test_nll_list)
 dist = sum(test_dist_list) / len(test_dist_list)

@@ -24,15 +24,15 @@ logging.basicConfig(filename='maxent_nonlinear_offroad.log', format='%(levelname
 """ init param """
 #pre_train_weight = 'pre-train-v6-dilated/step1580-loss0.0022763446904718876.pth'
 pre_train_weight = None
-vis_per_steps = 10
+vis_per_steps = 20
 test_per_steps = 20
 # resume = 'step130-loss1.2918855668639102.pth'
 resume = None
-exp_name = '11.23'
+exp_name = 'epoch10-11.25'
 grid_size = 80
 discount = 0.9
 lr = 5e-4
-n_epoch = 20
+n_epoch = 10
 batch_size = 16
 n_worker = 8
 use_gpu = True

@@ -11,7 +11,7 @@ class RewardNet(nn.Module):
         self.bilinear = bilinear
         self.n_states = n_states
 
-        scale = 2
+        scale = 1
         self.inc = DoubleConv(n_channels, 64 // scale)
         self.down1 = Down(64 // scale, 128 // scale)
         self.down2 = Down(128 // scale, 256 // scale)
