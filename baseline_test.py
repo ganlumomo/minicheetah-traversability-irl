@@ -23,7 +23,7 @@ n_worker = 8
 #resume = 'step700-loss0.6980162681374217.pth'
 #net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
 
-exp = 'baseline-11.25'
+exp = 'baseline16-11.25'
 resume = 'step500-loss0.9195887157282825.pth'
 net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
 
