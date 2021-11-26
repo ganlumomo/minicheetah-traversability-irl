@@ -24,8 +24,8 @@ n_worker = 8
 #resume = 'step700-loss0.6980162681374217.pth'
 #net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
 
-exp = 'epoch20-11.25'
-resume = 'step220-loss0.9617737870051374.pth'
+exp = 'epoch16-11.26-wo'
+resume = 'step540-loss0.7731626504837908.pth'
 net = RewardNet(n_channels=5, n_classes=1)
 
 def rl(future_traj_sample, r_sample, model, grid_size):

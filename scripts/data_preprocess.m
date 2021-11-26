@@ -21,9 +21,9 @@ window_size = 450;
 folder_path = '/home/ganlu/minicheetah_irldata/';
 %folder_path = '/media/ganlu/Samsung_T5/0000_mini-cheetah/2021-05-29_Forest_Sidewalk_Rock_Data/2021-05-29-00-51-42/raw_data/'
 file_list = dir(append(folder_path, '*.xml'));
-for i = 1:length(file_list)
+for i = 50:length(file_list)
     file_path = append(folder_path, file_list(i).name);
-    process_file(file_path, grid_size, window_size, false, true);
+    process_file(file_path, grid_size, window_size, true, true);
 end
 %save('/home/ganlu/Docker/vehicle-motion-forecasting/scripts/running_statistics.mat', 'elevation_meanobj', 'uncertainty_meanobj', ...
   %  'r_meanobj', 'g_meanobj', 'b_meanobj', 'elevation_stdobj', 'uncertainty_stdobj', 'r_stdobj', 'g_stdobj', 'b_stdobj');
@@ -152,7 +152,7 @@ function rgb_overlayed = overlay_traj_to_rgb(r, g, b, past_traj, future_traj, tr
     for i = 1:size(future_traj, 1)
         r(future_traj(i, 1), future_traj(i, 2)) = 0;
         g(future_traj(i, 1), future_traj(i, 2)) = 1;
-        b(future_traj(i, 1), future_traj(i, 2)) = 0;
+        b(future_traj(i, 1), future_traj(i, 2)) = 1;
     end
 %     for i = 1:size(traj, 1)
 %         r(traj(i, 1), traj(i, 2)) = 0;
@@ -165,9 +165,11 @@ function rgb_overlayed = overlay_traj_to_rgb(r, g, b, past_traj, future_traj, tr
 end
 
 function visualize_grid(elevation, uncertainty, rgb_overlayed, robot_state_data, average_energy_consumption)
+    load('plasma.mat');
     figure;
     subplot(1,4,1);
     imagesc(elevation);
+    colormap(plasma);
     subplot(1,4,2);
     imagesc(uncertainty);
     subplot(1,4,3);
@@ -175,6 +177,24 @@ function visualize_grid(elevation, uncertainty, rgb_overlayed, robot_state_data,
     subplot(1,4,4);
     imagesc(robot_state_data);
     title(average_energy_consumption);
+    plot_robot_state(robot_state_data);
+end
+
+function plot_robot_state(robot_state)
+    figure;
+    subplot(2,1,1);
+    plot(robot_state(:,1),'LineWidth',2);
+    set(gca,'FontSize', 13, 'TickLabelInterpreter','latex'); hold on
+    plot(robot_state(:,2),'LineWidth',2); hold on
+    plot(robot_state(:,3),'LineWidth',2);
+    legend({'$\omega_x$', '$\omega_y$', '$\omega_z$'}, 'Interpreter', 'latex', 'FontSize', 17);
+    subplot(2,1,2);
+    plot(robot_state(:,4),'LineWidth',2);
+    set(gca,'FontSize', 13, 'TickLabelInterpreter','latex'); hold on
+    plot(robot_state(:,5),'LineWidth',2); hold on
+    plot(robot_state(:,6),'LineWidth',2);
+    legend({'$a_x$', '$a_y$', '$a_z$'}, 'Interpreter', 'latex', 'FontSize', 17);
+    
 end
 
 function generate_mat(file_path, elevation, uncertainty, r, g, b, past_traj, future_traj, robot_state_data, average_energy_consumption, grid_size)
