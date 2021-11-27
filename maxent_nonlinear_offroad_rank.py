@@ -94,6 +94,21 @@ def rl(future_traj_sample, r_sample, model, grid_size):
     print(nll_sample)
     return nll_sample, svf_diff_var_sample, values_sample
 
+def rl_rank(future_traj_sample, past_traj_sample, r_sample, model, grid_size):
+    svf_demo_sample = model.find_demo_svf(future_traj_sample)
+    values_sample = model.find_optimal_value(r_sample, 0.1)
+    policy = model.find_stochastic_policy(values_sample, r_sample)
+    svf_sample = model.find_svf(future_traj_sample, policy)
+    svf_diff_sample = svf_demo_sample - svf_sample
+    # (1, n_feature, grid_size, grid_size)
+    svf_diff_sample = svf_diff_sample.reshape(1, 1, grid_size, grid_size)
+    svf_diff_var_sample = Variable(torch.from_numpy(svf_diff_sample).float(), requires_grad=False)
+    nll_sample = model.compute_nll(policy, future_traj_sample)
+    print(nll_sample)
+    past_return_sample = model.compute_return(r_sample, past_traj_sample) # compute return
+    past_return_sample = np.array([past_return_sample])
+    past_return_var_sample = Variable(torch.from_numpy(past_return_sample).float())
+    return nll_sample, svf_diff_var_sample, values_sample, past_return_var_sample
 
 def pred(feat, robot_state_feat, future_traj, net, n_states, model, grid_size):
     n_sample = feat.shape[0]
@@ -119,3 +134,33 @@ def pred(feat, robot_state_feat, future_traj, net, n_states, model, grid_size):
     values_list = [result[i].get()[2] for i in range(n_sample)]
     svf_diff_var = torch.cat(svf_diff_var_list, dim=0)
     return nll_list, r_var, svf_diff_var, values_list
+
+def pred_rank(feat, robot_state_feat, future_traj, past_traj, net, n_states, model, grid_size):
+    n_sample = feat.shape[0]
+    feat = feat.float()
+    feat_var = Variable(feat)
+    robot_state_feat = robot_state_feat.float()
+    robot_state_feat_var = Variable(robot_state_feat)
+    r_var = net(feat_var, robot_state_feat_var)
+
+    result = []
+    pool = Pool(processes=n_sample)
+    for i in range(n_sample):
+        r_sample = r_var[i].data.numpy().squeeze().reshape(n_states)
+        future_traj_sample = future_traj[i].numpy()  # choose one sample from the batch
+        future_traj_sample = future_traj_sample[~np.isnan(future_traj_sample).any(axis=1)]  # remove appended NAN rows
+        future_traj_sample = future_traj_sample.astype(np.int64)
+        past_traj_sample = past_traj[i].numpy()  # choose one sample from the batch
+        past_traj_sample = past_traj_sample[~np.isnan(past_traj_sample).any(axis=1)]  # remove appended NAN rows
+        past_traj_sample = past_traj_sample.astype(np.int64)
+        result.append(pool.apply_async(rl_rank, args=(future_traj_sample, past_traj_sample, r_sample, model, grid_size)))
+    pool.close()
+    pool.join()
+    # extract result and stack svf_diff
+    nll_list = [result[i].get()[0] for i in range(n_sample)]
+    svf_diff_var_list = [result[i].get()[1] for i in range(n_sample)]
+    values_list = [result[i].get()[2] for i in range(n_sample)]
+    past_return_var_list = [result[i].get()[3] for i in range(n_sample)]
+    svf_diff_var = torch.cat(svf_diff_var_list, dim=0)
+    past_return_var = torch.cat(past_return_var_list, dim=0)
+    return nll_list, r_var, svf_diff_var, values_list, past_return_var

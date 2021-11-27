@@ -76,6 +76,16 @@ class OffroadGrid(object):
 
         return feat_expect
 
+    def compute_return(self, reward, traj):
+        total_reward = 0
+        discount = 1
+        for xy in traj:
+            idx = self.xy_to_idx((xy[0], xy[1]))
+            total_reward += discount * reward[idx]
+            discount *= self.discount
+
+        return total_reward
+
     def find_demo_svf(self, traj):
         """
         compute state visitation frequency from demostration trajectory
