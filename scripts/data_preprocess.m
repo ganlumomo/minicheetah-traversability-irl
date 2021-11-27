@@ -21,7 +21,7 @@ window_size = 450;
 folder_path = '/home/ganlu/minicheetah_irldata/';
 %folder_path = '/media/ganlu/Samsung_T5/0000_mini-cheetah/2021-05-29_Forest_Sidewalk_Rock_Data/2021-05-29-00-51-42/raw_data/'
 file_list = dir(append(folder_path, '*.xml'));
-for i = 50:length(file_list)
+for i = 300:length(file_list)
     file_path = append(folder_path, file_list(i).name);
     process_file(file_path, grid_size, window_size, true, true);
 end
