@@ -24,7 +24,7 @@ class OffroadLoader(Dataset):
         if train:
             self.data_dir = datadir + 'train_data/'
         else:
-            self.data_dir = datadir + 'test_data/'
+            self.data_dir = datadir + 'test_data_101_200/'
 
         if demo is not None:
             self.data_dir = datadir + '/irl_data/' + demo
@@ -49,15 +49,20 @@ class OffroadLoader(Dataset):
     def __getitem__(self, index):
         data_mat = sio.loadmat(self.data_list[index])
         feat, robot_state_feat, past_traj, future_traj, ave_energy_cons = data_mat['feat'].copy(), data_mat['robot_state_data'], data_mat['past_traj'], data_mat['future_traj'], data_mat['average_energy_consumption']
+        normalization = 0.5 * self.grid_size
+        feat = np.vstack((feat, np.expand_dims(self.delta_x_layer.copy() / normalization, axis=0)))
+        feat = np.vstack((feat, np.expand_dims(self.delta_y_layer.copy() / normalization, axis=0)))
+        
+        # visualize rgb
+        feat = np.vstack((feat, np.expand_dims(feat[2], axis=0)))
+        feat = np.vstack((feat, np.expand_dims(feat[3], axis=0)))
+        feat = np.vstack((feat, np.expand_dims(feat[4], axis=0)))
         # normalize features locally
         for i in range(5):
             feat[i] = (feat[i] - np.mean(feat[i])) / np.std(feat[i])
         # normalize robot state feature locally
         robot_state_feat = (robot_state_feat - np.mean(robot_state_feat, axis=0, keepdims=True)) / np.std(robot_state_feat, axis=0, keepdims=True)
 
-        normalization = 0.5 * self.grid_size
-        feat = np.vstack((feat, np.expand_dims(self.delta_x_layer.copy() / normalization, axis=0)))
-        feat = np.vstack((feat, np.expand_dims(self.delta_y_layer.copy() / normalization, axis=0)))
  
         if self.pre_train:
             target = data_mat['feat'][1].copy()  # copy the variance layer first

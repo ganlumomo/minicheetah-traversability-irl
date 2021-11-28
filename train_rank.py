@@ -42,7 +42,7 @@ if not os.path.exists(os.path.join('exp', exp_name)):
     os.makedirs(os.path.join('exp', exp_name))
 
 #host = os.environ['HOSTNAME']
-#vis = visdom.Visdom(env='v{}-{}'.format(exp_name, host), server='http://128.2.176.221', port=4546)
+#vis = visdom.Visdom(env='v{}-{}'.format(exp_name, host), server='http://172.17.0.2', port=8097)
 vis = visdom.Visdom(env='main')
 
 model = offroad_grid.OffroadGrid(grid_size, discount)

@@ -12,7 +12,7 @@ import torch
 import time
 from multiprocessing import Pool
 import os
-from maxent_nonlinear_offroad import visualize_batch
+from maxent_nonlinear_offroad_rank import visualize_batch
 
 # initialize param
 grid_size = 80
@@ -33,7 +33,8 @@ def rl(future_traj_sample, r_sample, model, grid_size):
     values_sample = model.find_optimal_value(r_sample, 0.01)
     policy = model.find_stochastic_policy(values_sample, r_sample)
     svf_sample = model.find_svf(future_traj_sample, policy)
-    svf_diff_sample = svf_demo_sample - svf_sample
+    #svf_diff_sample = svf_demo_sample - svf_sample
+    svf_diff_sample = svf_sample
     # (1, n_feature, grid_size, grid_size)
     svf_diff_sample = svf_diff_sample.reshape(1, 1, grid_size, grid_size)
     svf_diff_var_sample = Variable(torch.from_numpy(svf_diff_sample).float(), requires_grad=False)
@@ -87,7 +88,7 @@ for step, (feat, past_traj, future_traj) in enumerate(loader):
     nll_list, r_var, svf_diff_var, values_list, dist_list = pred(feat, future_traj, net, n_states, model, grid_size)
     test_nll_list += nll_list
     test_dist_list += dist_list
-    #visualize_batch(past_traj, future_traj, feat, r_var, values_list, svf_diff_var, step, vis, grid_size, train=False)
+    visualize_batch(past_traj, future_traj, feat, r_var, values_list, svf_diff_var, step, vis, grid_size, train=False)
     print('{}'.format(sum(test_dist_list) / len(test_dist_list)))
 nll = sum(test_nll_list) / len(test_nll_list)
 dist = sum(test_dist_list) / len(test_dist_list)

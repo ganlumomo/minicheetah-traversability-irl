@@ -80,7 +80,7 @@ class RewardNet(nn.Module):
     
 
     def forward(self, x, state_x):
-        kinematic_in = x[:, self.n_channels:, :, :]
+        kinematic_in = x[:, self.n_channels:self.n_channels+2, :, :]
         
         # geometric and semantic feature extraction
         x = x[:, :self.n_channels, :, :]
@@ -108,5 +108,5 @@ class RewardNet(nn.Module):
             fc_out = self.upsample(torch.unsqueeze(torch.unsqueeze(fc_out, 2), 3))
             x = torch.cat((x, fc_out), dim=1)
         out = self.regression_block(x)
-
+        
         return out

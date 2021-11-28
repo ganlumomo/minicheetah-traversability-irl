@@ -7,6 +7,7 @@ warnings.filterwarnings('ignore')
 from torch.autograd import Variable
 import torch
 from multiprocessing import Pool
+from viz import overlay, feat2rgb
 
 
 def overlay_traj_to_map(traj1, traj2, feat, value1=5.0, value2=10.0):
@@ -21,6 +22,7 @@ def overlay_traj_to_map(traj1, traj2, feat, value1=5.0, value2=10.0):
 def visualize_batch(past_traj, future_traj, feat, r_var, values, svf_diff_var, step, vis, grid_size, train=True):
     mode = 'train' if train else 'test'
     n_batch = past_traj.shape[0]
+    step = step*n_batch
     for i in range(n_batch):
         future_traj_sample = future_traj[i].numpy()  # choose one sample from the batch
         future_traj_sample = future_traj_sample[~np.isnan(future_traj_sample).any(axis=1)]  # remove appended NAN rows
@@ -29,24 +31,25 @@ def visualize_batch(past_traj, future_traj, feat, r_var, values, svf_diff_var, s
         past_traj_sample = past_traj_sample[~np.isnan(past_traj_sample).any(axis=1)]  # remove appended NAN rows
         past_traj_sample = past_traj_sample.astype(np.int64)
 
-        vis.heatmap(X=feat[i, 0, :, :].float().view(grid_size, -1),
-                    opts=dict(colormap='Greys', title='{}, step {} height max'.format(mode, step)))
+        #vis.heatmap(X=feat[i, 0, :, :].float().view(grid_size, -1),
+        #            opts=dict(colormap='Greys', title='{}, step {} height max'.format(mode, step)))
 
-        vis.heatmap(X=feat[i, 1, :, :].float().view(grid_size, -1),
-                    opts=dict(colormap='Greys', title='{}, step {} height var'.format(mode, step)))
+        #vis.heatmap(X=feat[i, 1, :, :].float().view(grid_size, -1),
+        #            opts=dict(colormap='Greys', title='{}, step {} height var'.format(mode, step)))
 
-        overlay_map = feat[i, 3, :, :].float().view(grid_size, -1).numpy()  # (grid_size, grid_size)
-        past = np.min(feat[i, 3, :, :].numpy())
-        future = np.max(feat[i, 3, :, :].numpy())
-        overlay_map = overlay_traj_to_map(past_traj_sample, future_traj_sample, overlay_map, past, future)
-        vis.heatmap(X=overlay_map, opts=dict(colormap='Greys', title='{}, step {} green'.format(mode, step)))
-
-        vis.heatmap(X=r_var.data[i].view(grid_size, -1),
-                    opts=dict(colormap='Greys', title='{}, step {}, rewards'.format(mode, step)))
-        vis.heatmap(X=values[i].reshape(grid_size, -1),
-                    opts=dict(colormap='Greys', title='{}, step {}, value'.format(mode, step)))
-        vis.heatmap(X=svf_diff_var.data[i].view(grid_size, -1),
-                    opts=dict(colormap='Greys', title='{}, step {}, SVF_diff'.format(mode, step)))
+        #overlay_map = feat[i, 3, :, :].float().view(grid_size, -1).numpy()  # (grid_size, grid_size)
+        #past = np.min(feat[i, 3, :, :].numpy())
+        #future = np.max(feat[i, 3, :, :].numpy())
+        #overlay_map = overlay_traj_to_map(past_traj_sample, future_traj_sample, overlay_map, past, future)
+        #vis.heatmap(X=overlay_map, opts=dict(colormap='Greys', title='{}, step {} green'.format(mode, step)))
+        overlay_map = overlay(feat2rgb(feat[i].numpy()), future_traj_sample, past_traj_sample)
+        vis.image(np.transpose(overlay_map, (2, 0, 1)), opts=dict(title='{} rgb'.format(step+i)))
+        vis.heatmap(X=np.flip(r_var.data[i].view(grid_size, -1), 0),
+                    opts=dict(colormap='Electric', title='{}, step {}, rewards'.format(mode, step+i)))
+        #vis.heatmap(X=values[i].reshape(grid_size, -1),
+        #            opts=dict(colormap='Greys', title='{}, step {}, value'.format(mode, step)))
+        vis.heatmap(X=np.flip(svf_diff_var.data[i].view(grid_size, -1), 0),
+                    opts=dict(colormap='Electric', title='{}, step {}, SVF_diff'.format(mode, step+i)))
 
 
 def visualize(past_traj, future_traj, feat, r_var, values, svf_diff_var, step, vis, grid_size, train=True):

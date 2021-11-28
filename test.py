@@ -24,8 +24,10 @@ n_worker = 8
 #resume = 'step700-loss0.6980162681374217.pth'
 #net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
 
-exp = 'epoch16-11.26-wo'
-resume = 'step540-loss0.7731626504837908.pth'
+#exp = 'epoch16-11.26-wo'
+#resume = 'step520-loss0.7883756830777934.pth'
+exp = 'epoch16-11.26'
+resume = 'step720-loss0.7392822343231509.pth'
 net = RewardNet(n_channels=5, n_classes=1)
 
 def rl(future_traj_sample, r_sample, model, grid_size):
@@ -33,7 +35,8 @@ def rl(future_traj_sample, r_sample, model, grid_size):
     values_sample = model.find_optimal_value(r_sample, 0.01)
     policy = model.find_stochastic_policy(values_sample, r_sample)
     svf_sample = model.find_svf(future_traj_sample, policy)
-    svf_diff_sample = svf_demo_sample - svf_sample
+    #svf_diff_sample = svf_demo_sample - svf_sample
+    svf_diff_sample = svf_sample
     # (1, n_feature, grid_size, grid_size)
     svf_diff_sample = svf_diff_sample.reshape(1, 1, grid_size, grid_size)
     svf_diff_var_sample = Variable(torch.from_numpy(svf_diff_sample).float(), requires_grad=False)
@@ -84,12 +87,13 @@ net.eval()
 
 test_nll_list = []
 test_dist_list = []
+counter = 1
 for step, (feat, past_traj, future_traj, robot_state_feat, ave_energy_cons) in enumerate(loader):
     start = time.time()
     nll_list, r_var, svf_diff_var, values_list, dist_list = pred(feat, robot_state_feat, future_traj, net, n_states, model, grid_size)
     test_nll_list += nll_list
     test_dist_list += dist_list
-    #visualize_batch(past_traj, future_traj, feat, r_var, values_list, svf_diff_var, step, vis, grid_size, train=False)
+    visualize_batch(past_traj, future_traj, feat, r_var, values_list, svf_diff_var, step, vis, grid_size, train=False)
     print('{}'.format(sum(test_dist_list) / len(test_dist_list)))
 nll = sum(test_nll_list) / len(test_nll_list)
 dist = sum(test_dist_list) / len(test_dist_list)

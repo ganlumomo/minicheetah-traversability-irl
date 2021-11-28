@@ -24,7 +24,7 @@ class OffroadLoader(Dataset):
         if train:
             self.data_dir = datadir + 'train_data/'
         else:
-            self.data_dir = datadir + 'test_data/'
+            self.data_dir = datadir + 'test_data_1_100/'
 
         if demo is not None:
             self.data_dir = datadir + '/irl_data/' + demo
