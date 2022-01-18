@@ -1,4 +1,4 @@
-name: vehicle_motion_forecasting
+name: minicheetah-traversability-irl
 channels:
   - pytorch
   - defaults
