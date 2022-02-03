@@ -83,6 +83,7 @@ class OffroadGrid(object):
             idx = self.xy_to_idx((xy[0], xy[1]))
             total_reward += discount * reward[idx]
             discount *= self.discount
+        #total_reward = total_reward / traj.shape[0] * 100
 
         return total_reward
 
@@ -121,6 +122,17 @@ class OffroadGrid(object):
                     svf[self.transit_table[s, a], t] += (svf[s, t - 1] * policy[s, a])
 
         return svf.sum(axis=1)
+
+    def find_optimal_traj(self, traj, policy):
+        step_count = 0
+        current_idx = self.xy_to_idx((traj[0,0], traj[0,1]))
+        optimal_traj = [(traj[0,0], traj[0,1])]
+        while step_count < len(traj):
+            action = np.argmax(policy[current_idx])
+            current_idx = self.transit_table[current_idx, action]
+            optimal_traj.append(self.idx_to_xy(current_idx))
+            step_count += 1
+        return optimal_traj
 
     # @jit(parallel=True)
     def find_svf_demo(self, policy, traj_len):

@@ -29,7 +29,7 @@ vis_per_steps = 20
 test_per_steps = 20
 # resume = 'step130-loss1.2918855668639102.pth'
 resume = None
-exp_name = 'epoch16-11.27-rank'
+exp_name = 'epoch16-12.05-rank'
 grid_size = 80
 discount = 0.9
 lr = 5e-4
@@ -109,6 +109,7 @@ for epoch in range(n_epoch):
         past_return_var_i = past_return_var[:half_batch_size]
         past_return_var_j = past_return_var[half_batch_size:half_batch_size*2]
         output = torch.cat((past_return_var_i.unsqueeze(dim=1), past_return_var_j.unsqueeze(dim=1)), dim=1)
+        #print(output)
         ave_energy_cons_i = ave_energy_cons[:half_batch_size]
         ave_energy_cons_j = ave_energy_cons[half_batch_size:half_batch_size*2]
         target = torch.gt(ave_energy_cons_i, ave_energy_cons_j).squeeze().long() # 0 when i is better, 1 when j is better

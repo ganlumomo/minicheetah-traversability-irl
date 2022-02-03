@@ -25,7 +25,7 @@ n_worker = 8
 #net = HybridDilated(feat_out_size=25, regression_hidden_size=64)
 
 #exp = 'epoch16-11.26-wo'
-#resume = 'step520-loss0.7883756830777934.pth'
+#resume = 'step540-loss0.7731626504837908.pth'
 exp = 'epoch16-11.26'
 resume = 'step720-loss0.7392822343231509.pth'
 net = RewardNet(n_channels=5, n_classes=1)

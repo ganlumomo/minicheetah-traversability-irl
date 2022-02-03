@@ -21,9 +21,9 @@ window_size = 450;
 folder_path = '/home/ganlu/minicheetah_irldata/';
 %folder_path = '/media/ganlu/Samsung_T5/0000_mini-cheetah/2021-05-29_Forest_Sidewalk_Rock_Data/2021-05-29-00-51-42/raw_data/'
 file_list = dir(append(folder_path, '*.xml'));
-for i = 300:length(file_list)
+for i = 1:length(file_list)
     file_path = append(folder_path, file_list(i).name);
-    process_file(file_path, grid_size, window_size, true, true);
+    process_file(file_path, grid_size, window_size, false, true);
 end
 %save('/home/ganlu/Docker/vehicle-motion-forecasting/scripts/running_statistics.mat', 'elevation_meanobj', 'uncertainty_meanobj', ...
   %  'r_meanobj', 'g_meanobj', 'b_meanobj', 'elevation_stdobj', 'uncertainty_stdobj', 'r_stdobj', 'g_stdobj', 'b_stdobj');
@@ -40,9 +40,9 @@ function process_file(file_path, grid_size, window_size, visualize, generate)
     future_traj = read_trajectory(file.future_traj);
     valid_past_traj = validate_trajectory(past_traj);
     valid_future_traj = validate_trajectory(future_traj);
-    valid_traj = validate_trajectory([past_traj; future_traj]);
+    %valid_traj = validate_trajectory([past_traj; future_traj]);
     imu_data = process_imu(file.past_imu, window_size);
-    [joint_state_data, average_energy_consumption] = process_joint_state(file.past_joint_state, window_size, valid_traj);
+    [joint_state_data, average_energy_consumption] = process_joint_state(file.past_joint_state, window_size, valid_past_traj);
     robot_state_data = [imu_data joint_state_data];
     
     if visualize & min(sum(var(valid_past_traj)), sum(var(valid_future_traj))) > 10
